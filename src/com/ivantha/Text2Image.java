@@ -4,72 +4,55 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Scanner;
 
 public class Text2Image extends JPanel {
 
-    public static final String IMG_PATH = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Thomas_Hicks_-_Leopold_Grozelier_-_Presidential_Candidate_Abraham_Lincoln_1860.jpg/456px-Thomas_Hicks_-_Leopold_Grozelier_-_Presidential_Candidate_Abraham_Lincoln_1860.jpg";
     public static final String TXT_PATH = "https://raw.githubusercontent.com/sinhala-ocr/tess-ta/master/samples/mawbima.txt";
     public static final String NEW_LINE = System.getProperty("line.separator");
-    private BufferedImage backgroundImg = null;
-
-    public Text2Image(BufferedImage img, String text) {
-        backgroundImg = img;
-
-        JTextArea textArea = new JTextArea(text);
-        textArea.setOpaque(false);
-        setLayout(new GridBagLayout());
-        add(textArea);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (backgroundImg != null) {
-            g.drawImage(backgroundImg, 0, 0, this);
-        }
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-        if (isPreferredSizeSet() || backgroundImg == null) {
-            return super.getPreferredSize();
-        }
-        int w = backgroundImg.getWidth();
-        int h = backgroundImg.getHeight();
-        return new Dimension(w, h);
-    }
-
-    private static void createAndShowGui(BufferedImage img, String text) {
-        Text2Image mainPanel = new Text2Image(img, text);
-
-        JFrame frame = new JFrame("DrawOnImg");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.getContentPane().add(mainPanel);
-        frame.pack();
-        frame.setLocationByPlatform(true);
-        frame.setVisible(true);
-    }
 
     public static void main(String[] args) {
-        Scanner scanner = null;
-        try {
-            URL txtUrl = new URL(TXT_PATH);
-            scanner = new Scanner(txtUrl.openStream());
+        BufferedImage bufferedImage = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D g2d = bufferedImage.createGraphics();
+
+        // antialiasing
+//        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+
+        try (Scanner scanner = new Scanner(new URL(TXT_PATH).openStream())) {
             final String text = readText(scanner);
 
-            URL imgUrl = new URL(IMG_PATH);
-            final BufferedImage img = ImageIO.read(imgUrl);
-            SwingUtilities.invokeLater(() -> createAndShowGui(img, text));
+            // paint white background
+            g2d.setPaint(Color.white);
+            g2d.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
+
+            // set font
+            Font font = Font.createFont(Font.TRUETYPE_FONT, new File("iskpota.ttf"));
+//            g2d.setFont(new Font("Roboto", Font.PLAIN, 12));
+            g2d.setFont(font.deriveFont(14f));
+            g2d.setColor(Color.black);
+
+            FontMetrics fontMetrics = g2d.getFontMetrics();
+            int x = 20;
+            int y = 20;
+            g2d.drawString(text, x, y);
+            g2d.dispose();
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(-1);
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
+        } catch (FontFormatException e) {
+            e.printStackTrace();
+        }
+
+        File myNewTIFF_File = new File("ImageAsTIFF.tiff");
+        try {
+            ImageIO.write(bufferedImage, "TIFF", myNewTIFF_File);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
     }
