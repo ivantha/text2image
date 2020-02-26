@@ -15,7 +15,7 @@ public class Text2Image extends JPanel {
     public static final String NEW_LINE = System.getProperty("line.separator");
 
     public static void main(String[] args) {
-        BufferedImage bufferedImage = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bufferedImage = new BufferedImage(1000, 1000, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D g2d = bufferedImage.createGraphics();
 
